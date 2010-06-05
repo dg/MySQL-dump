@@ -72,8 +72,12 @@ class MySQLDump
 	 * @param  resource
 	 * @return void
 	*/
-	private function write($handle)
+	public function write($handle)
 	{
+		if (!is_resource($handle) || get_resource_type($handle) !== 'stream') {
+			throw new Exception('Argument must be stream resource.');
+		}
+
 		if (!$this->connection->set_charset('utf8')) { // was added in MySQL 5.0.7 and PHP 5.0.5, fixed in PHP 5.1.5)
 			throw new Exception($this->connection->error);
 		}
