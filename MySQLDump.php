@@ -123,7 +123,7 @@ class MySQLDump
 			$cols = array();
 			while ($row = $res->fetch_assoc()) {
 				$col = $row['Field'];
-				$cols[] = "`$col`";
+				$cols[] = '`' . str_replace('`', '``', $col) . '`';
 				$numeric[$col] = (bool) preg_match('#BYTE|COUNTER|SERIAL|INT|LONG|CURRENCY|REAL|MONEY|FLOAT|DOUBLE|DECIMAL|NUMERIC|NUMBER#i', $row['Type']);
 			}
 			$cols = '(' . implode(', ', $cols) . ')';
