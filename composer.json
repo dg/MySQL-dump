@@ -1,0 +1,16 @@
+{
+	"name": "dg/mysql-dump",
+	"description": "MySQL database dump.",
+	"keywords": ["mysql"],
+	"homepage": "https://github.com/dg/MySQL-dump",
+	"license": ["BSD-3"],
+	"authors": [
+		{
+			"name": "David Grudl",
+			"homepage": "http://davidgrudl.com"
+		}
+	],
+	"autoload": {
+		"classmap": ["MySQLDump.php"]
+	}
+}
