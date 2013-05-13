@@ -13,6 +13,17 @@ class MySQLDump
 {
 	const MAX_SQL_SIZE = 1e6;
 
+	const NONE = 0;
+	const DROP = 1;
+	const CREATE = 2;
+	const DATA = 4;
+	const ALL = 7; // DROP | CREATE | DATA
+
+	/** @var array */
+	public $tables = array(
+		'*' => self::ALL,
+	);
+
 	/** @var mysqli */
 	private $connection;
 
@@ -106,10 +117,16 @@ class MySQLDump
 
 		fwrite($handle, "-- --------------------------------------------------------\n\n");
 
+		$mode = isset($this->tables[$table]) ? $this->tables[$table] : $this->tables['*'];
 		$view = isset($row['Create View']);
-		fwrite($handle, 'DROP ' . ($view ? 'VIEW' : 'TABLE') . " IF EXISTS `$table`;\n\n");
-		fwrite($handle, $row[$view ? 'Create View' : 'Create Table'] . ";\n\n");
-		if ($view) {
+
+		if ($mode & self::DROP) {
+			fwrite($handle, 'DROP ' . ($view ? 'VIEW' : 'TABLE') . " IF EXISTS `$table`;\n\n");
+		}
+		if ($mode & self::CREATE) {
+			fwrite($handle, $row[$view ? 'Create View' : 'Create Table'] . ";\n\n");
+		}
+		if ($view || !($mode & self::DATA)) {
 			return;
 		}
 
