@@ -75,9 +75,11 @@ class MySQLDump
 	 * @param  resource
 	 * @return void
 	*/
-	public function write($handle)
+	public function write($handle = NULL)
 	{
-		if (!is_resource($handle) || get_resource_type($handle) !== 'stream') {
+		if ($handle === NULL) {
+			$handle = fopen('php://output', 'wb');
+		} elseif (!is_resource($handle) || get_resource_type($handle) !== 'stream') {
 			throw new Exception('Argument must be stream resource.');
 		}
 
