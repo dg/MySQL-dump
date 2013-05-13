@@ -37,24 +37,6 @@ class MySQLDump
 
 
 	/**
-	 * Sends dump to browser.
-	 * @param  string filename
-	 * @return void
-	*/
-	public function send($file)
-	{
-		ini_set('zlib.output_compression', true);
-		header('Content-Type: ' . (strcasecmp(substr($file, -3), '.gz') ? 'text/plain' : 'application/x-gzip'));
-		header('Content-Disposition: attachment; filename="' . $file . '"');
-		header('Expires: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-		header('Cache-Control: no-cache');
-		header('Connection: close');
-		$this->write(fopen('php://output', 'wb'));
-	}
-
-
-
-	/**
 	 * Saves dump to the file.
 	 * @param  string filename
 	 * @return void
