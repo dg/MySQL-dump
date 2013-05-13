@@ -3,11 +3,10 @@
 /**
  * MySQL database dump.
  *
- * @author     David Grudl
+ * @author     David Grudl (http://davidgrudl.com)
  * @copyright  Copyright (c) 2008 David Grudl
  * @license    New BSD License
- * @link       http://phpfashion.com/
- * @version    0.9
+ * @version    1.0
  */
 class MySQLDump
 {
