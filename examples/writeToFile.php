@@ -4,7 +4,7 @@ set_time_limit(0);
 ignore_user_abort(TRUE);
 
 
-require 'MySQLDump.php';
+require __DIR__ . '/../src/MySQLDump.php';
 
 $time = -microtime(TRUE);
 
