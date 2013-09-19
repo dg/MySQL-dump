@@ -81,6 +81,8 @@ class MySQLDump
 		}
 		$res->close();
 
+		$this->connection->query('LOCK TABLES `' . implode('` READ, `', $tables) . '` READ');
+
 		$db = $this->connection->query('SELECT DATABASE()')->fetch_row();
 		fwrite($handle, "-- Created at " . date('j.n.Y G:i') . " using David Grudl MySQL Dump Utility\n"
 			. (isset($_SERVER['HTTP_HOST']) ? "-- Host: $_SERVER[HTTP_HOST]\n" : '')
@@ -97,6 +99,8 @@ class MySQLDump
 		}
 
 		fwrite($handle, "-- THE END\n");
+
+		$this->connection->query('UNLOCK TABLES');
 	}
 
 
