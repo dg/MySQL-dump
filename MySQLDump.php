@@ -16,7 +16,8 @@ class MySQLDump
 	const DROP = 1;
 	const CREATE = 2;
 	const DATA = 4;
-	const ALL = 7; // DROP | CREATE | DATA
+	const TRIGGERS = 8;
+	const ALL = 15; // DROP | CREATE | DATA | TRIGGERS
 
 	/** @var array */
 	public $tables = array(
@@ -123,61 +124,71 @@ class MySQLDump
 		if ($mode & self::DROP) {
 			fwrite($handle, 'DROP ' . ($view ? 'VIEW' : 'TABLE') . " IF EXISTS $delTable;\n\n");
 		}
+
 		if ($mode & self::CREATE) {
 			fwrite($handle, $row[$view ? 'Create View' : 'Create Table'] . ";\n\n");
 		}
-		if ($view || !($mode & self::DATA)) {
-			return;
-		}
 
-		$numeric = array();
-		$res = $this->connection->query("SHOW COLUMNS FROM $delTable");
-		$cols = array();
-		while ($row = $res->fetch_assoc()) {
-			$col = $row['Field'];
-			$cols[] = $this->delimite($col);
-			$numeric[$col] = (bool) preg_match('#^[^(]*(BYTE|COUNTER|SERIAL|INT|LONG|CURRENCY|REAL|MONEY|FLOAT|DOUBLE|DECIMAL|NUMERIC|NUMBER)#i', $row['Type']);
-		}
-		$cols = '(' . implode(', ', $cols) . ')';
-		$res->close();
+		if (!$view && ($mode & self::DATA)) {
+			$numeric = array();
+			$res = $this->connection->query("SHOW COLUMNS FROM $delTable");
+			$cols = array();
+			while ($row = $res->fetch_assoc()) {
+				$col = $row['Field'];
+				$cols[] = $this->delimite($col);
+				$numeric[$col] = (bool) preg_match('#^[^(]*(BYTE|COUNTER|SERIAL|INT|LONG|CURRENCY|REAL|MONEY|FLOAT|DOUBLE|DECIMAL|NUMERIC|NUMBER)#i', $row['Type']);
+			}
+			$cols = '(' . implode(', ', $cols) . ')';
+			$res->close();
 
 
-		$size = 0;
-		$res = $this->connection->query("SELECT * FROM $delTable", MYSQLI_USE_RESULT);
-		while ($row = $res->fetch_assoc()) {
-			$s = '(';
-			foreach ($row as $key => $value) {
-				if ($value === NULL) {
-					$s .= "NULL,\t";
-				} elseif ($numeric[$key]) {
-					$s .= $value . ",\t";
+			$size = 0;
+			$res = $this->connection->query("SELECT * FROM $delTable", MYSQLI_USE_RESULT);
+			while ($row = $res->fetch_assoc()) {
+				$s = '(';
+				foreach ($row as $key => $value) {
+					if ($value === NULL) {
+						$s .= "NULL,\t";
+					} elseif ($numeric[$key]) {
+						$s .= $value . ",\t";
+					} else {
+						$s .= "'" . $this->connection->real_escape_string($value) . "',\t";
+					}
+				}
+
+				if ($size == 0) {
+					$s = "INSERT INTO $delTable $cols VALUES\n$s";
 				} else {
-					$s .= "'" . $this->connection->real_escape_string($value) . "',\t";
+					$s = ",\n$s";
+				}
+
+				$len = strlen($s) - 1;
+				$s[$len - 1] = ')';
+				fwrite($handle, $s, $len);
+
+				$size += $len;
+				if ($size > self::MAX_SQL_SIZE) {
+					fwrite($handle, ";\n");
+					$size = 0;
 				}
 			}
 
-			if ($size == 0) {
-				$s = "INSERT INTO $delTable $cols VALUES\n$s";
-			} else {
-				$s = ",\n$s";
-			}
-
-			$len = strlen($s) - 1;
-			$s[$len - 1] = ')';
-			fwrite($handle, $s, $len);
-
-			$size += $len;
-			if ($size > self::MAX_SQL_SIZE) {
+			$res->close();
+			if ($size) {
 				fwrite($handle, ";\n");
-				$size = 0;
 			}
+			fwrite($handle, "\n");
 		}
 
-		$res->close();
-		if ($size) {
-			fwrite($handle, ";\n");
+		if ($mode & self::TRIGGERS) {
+			$res = $this->connection->query("SHOW TRIGGERS LIKE '" . $this->connection->real_escape_string($table) . "'");
+			while ($row = $res->fetch_assoc()) {
+				fwrite($handle, "CREATE TRIGGER {$this->delimite($row['Trigger'])} $row[Timing] $row[Event] ON $delTable FOR EACH ROW\n$row[Statement];\n\n");
+			}
+			$res->close();
 		}
-		fwrite($handle, "\n\n");
+
+		fwrite($handle, "\n");
 	}
 
 
