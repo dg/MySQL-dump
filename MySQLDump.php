@@ -110,7 +110,8 @@ class MySQLDump
 	*/
 	public function dumpTable($handle, $table)
 	{
-		$res = $this->connection->query("SHOW CREATE TABLE `$table`");
+		$delTable = $this->delimite($table);
+		$res = $this->connection->query("SHOW CREATE TABLE $delTable");
 		$row = $res->fetch_assoc();
 		$res->close();
 
@@ -120,7 +121,7 @@ class MySQLDump
 		$view = isset($row['Create View']);
 
 		if ($mode & self::DROP) {
-			fwrite($handle, 'DROP ' . ($view ? 'VIEW' : 'TABLE') . " IF EXISTS `$table`;\n\n");
+			fwrite($handle, 'DROP ' . ($view ? 'VIEW' : 'TABLE') . " IF EXISTS $delTable;\n\n");
 		}
 		if ($mode & self::CREATE) {
 			fwrite($handle, $row[$view ? 'Create View' : 'Create Table'] . ";\n\n");
@@ -130,11 +131,11 @@ class MySQLDump
 		}
 
 		$numeric = array();
-		$res = $this->connection->query("SHOW COLUMNS FROM `$table`");
+		$res = $this->connection->query("SHOW COLUMNS FROM $delTable");
 		$cols = array();
 		while ($row = $res->fetch_assoc()) {
 			$col = $row['Field'];
-			$cols[] = '`' . str_replace('`', '``', $col) . '`';
+			$cols[] = $this->delimite($col);
 			$numeric[$col] = (bool) preg_match('#^[^(]*(BYTE|COUNTER|SERIAL|INT|LONG|CURRENCY|REAL|MONEY|FLOAT|DOUBLE|DECIMAL|NUMERIC|NUMBER)#i', $row['Type']);
 		}
 		$cols = '(' . implode(', ', $cols) . ')';
@@ -142,7 +143,7 @@ class MySQLDump
 
 
 		$size = 0;
-		$res = $this->connection->query("SELECT * FROM `$table`", MYSQLI_USE_RESULT);
+		$res = $this->connection->query("SELECT * FROM $delTable", MYSQLI_USE_RESULT);
 		while ($row = $res->fetch_assoc()) {
 			$s = '(';
 			foreach ($row as $key => $value) {
@@ -156,7 +157,7 @@ class MySQLDump
 			}
 
 			if ($size == 0) {
-				$s = "INSERT INTO `$table` $cols VALUES\n$s";
+				$s = "INSERT INTO $delTable $cols VALUES\n$s";
 			} else {
 				$s = ",\n$s";
 			}
@@ -177,6 +178,12 @@ class MySQLDump
 			fwrite($handle, ";\n");
 		}
 		fwrite($handle, "\n\n");
+	}
+
+
+	private function delimite($s)
+	{
+		return '`' . str_replace('`', '``', $s) . '`';
 	}
 
 }
