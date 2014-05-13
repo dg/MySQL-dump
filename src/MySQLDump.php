@@ -27,14 +27,22 @@ class MySQLDump
 	/** @var mysqli */
 	private $connection;
 
+	/**
+	 * @var array
+	 */
+	private $_conditions = array();
 
 	/**
 	 * Connects to database.
-	 * @param  mysqli connection
+	 * @param mysqli $connection
+	 * @param array|string $conditions
+	 *
+	 * @throws Exception
 	 */
-	public function __construct(mysqli $connection)
+	public function __construct(mysqli $connection, $conditions = null)
 	{
 		$this->connection = $connection;
+		$this->_parseConditions($conditions);
 
 		if ($connection->connect_errno) {
 			throw new Exception($connection->connect_error);
@@ -47,8 +55,10 @@ class MySQLDump
 
 	/**
 	 * Saves dump to the file.
-	 * @param  string filename
+	 * @param string $file
 	 * @return void
+	 *
+	 * @throws Exception
 	 */
 	public function save($file)
 	{
@@ -62,8 +72,10 @@ class MySQLDump
 
 	/**
 	 * Writes dump to logical file.
-	 * @param  resource
+	 * @param resource
 	 * @return void
+	 *
+	 * @throws Exception
 	 */
 	public function write($handle = NULL)
 	{
@@ -95,7 +107,7 @@ class MySQLDump
 		);
 
 		foreach ($tables as $table) {
-			$this->dumpTable($handle, $table);
+			$this->dumpTable($handle, $table, $this->_tableConditions($table));
 		}
 
 		fwrite($handle, "-- THE END\n");
@@ -106,10 +118,14 @@ class MySQLDump
 
 	/**
 	 * Dumps table to logical file.
-	 * @param  resource
+	 * @param resource $handle
+	 * @param string $table
+	 * @param string $conditions
 	 * @return void
+	 *
+	 * @throws Exception
 	 */
-	public function dumpTable($handle, $table)
+	public function dumpTable($handle, $table, $conditions = '')
 	{
 		$delTable = $this->delimite($table);
 		$res = $this->connection->query("SHOW CREATE TABLE $delTable");
@@ -143,7 +159,7 @@ class MySQLDump
 
 
 			$size = 0;
-			$res = $this->connection->query("SELECT * FROM $delTable", MYSQLI_USE_RESULT);
+			$res = $this->connection->query("SELECT * FROM $delTable" . ($conditions ? ' WHERE ' . $conditions : ''), MYSQLI_USE_RESULT);
 			while ($row = $res->fetch_assoc()) {
 				$s = '(';
 				foreach ($row as $key => $value) {
@@ -201,4 +217,43 @@ class MySQLDump
 		return '`' . str_replace('`', '``', $s) . '`';
 	}
 
+	/**
+	 * Parses conditions array to $this::_conditions
+	 *
+	 * @param string|array $conditions
+	 */
+	private function _parseConditions($conditions)
+	{
+		if (!$conditions) return;
+
+		if (is_string($conditions)) {
+			$this->_conditions[''] = '(' . $conditions . ')';
+
+			return;
+		}
+
+		foreach($conditions as $conditionKey => $conditionSQL) {
+			$conditionSQL = '(' . $conditionSQL . ')';
+
+			if (is_int($conditionKey)) {
+				$this->_conditions[''] = $conditionSQL;
+			} else {
+				foreach (explode(',', $conditionKey) as $tableName) {
+					if (!isset($this->_conditions[$tableName])) $this->_conditions[$tableName] = $conditionSQL;
+					else $this->_conditions[$tableName] .= ' AND ' . $conditionSQL;
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * Returns table-specific SQL `WHERE` conditions
+	 * @param string $table Table name
+	 * @return string
+	 */
+	private function _tableConditions($table)
+	{
+		return (isset($this->_conditions[$table]) ? $this->_conditions[$table] : '') . (isset($this->_conditions['']) ? (isset($this->_conditions[$table]) ? ' AND ' : '') . $this->_conditions[''] : '');
+	}
 }
