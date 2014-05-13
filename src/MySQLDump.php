@@ -27,14 +27,20 @@ class MySQLDump
 	/** @var mysqli */
 	private $connection;
 
+	/**
+	 * @var array
+	 */
+	private $_conditions = null;
 
 	/**
 	 * Connects to database.
 	 * @param  mysqli connection
+	 * @param array|string $conditions
 	 */
-	public function __construct(mysqli $connection)
+	public function __construct(mysqli $connection, $conditions = null)
 	{
 		$this->connection = $connection;
+		$this->_conditions = $conditions;
 
 		if ($connection->connect_errno) {
 			throw new Exception($connection->connect_error);
@@ -94,8 +100,10 @@ class MySQLDump
 			. "SET FOREIGN_KEY_CHECKS=0;\n"
 		);
 
+		$commonConditions = $this->_conditions && is_string($this->_conditions);
+
 		foreach ($tables as $table) {
-			$this->dumpTable($handle, $table);
+			$this->dumpTable($handle, $table, $this->_conditions ? ($commonConditions ? $this->_conditions : (isset($this->_conditions[$table]) ? $this->_conditions[$table] : null)) : null);
 		}
 
 		fwrite($handle, "-- THE END\n");
@@ -107,9 +115,10 @@ class MySQLDump
 	/**
 	 * Dumps table to logical file.
 	 * @param  resource
+	 * @param  string $conditions
 	 * @return void
 	 */
-	public function dumpTable($handle, $table)
+	public function dumpTable($handle, $table, $conditions = '')
 	{
 		$delTable = $this->delimite($table);
 		$res = $this->connection->query("SHOW CREATE TABLE $delTable");
@@ -143,7 +152,7 @@ class MySQLDump
 
 
 			$size = 0;
-			$res = $this->connection->query("SELECT * FROM $delTable", MYSQLI_USE_RESULT);
+			$res = $this->connection->query("SELECT * FROM $delTable" . ($conditions ? ' WHERE ' . $conditions : ''), MYSQLI_USE_RESULT);
 			while ($row = $res->fetch_assoc()) {
 				$s = '(';
 				foreach ($row as $key => $value) {
