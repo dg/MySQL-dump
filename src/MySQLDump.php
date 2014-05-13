@@ -34,8 +34,10 @@ class MySQLDump
 
 	/**
 	 * Connects to database.
-	 * @param  mysqli connection
+	 * @param mysqli $connection
 	 * @param array|string $conditions
+	 *
+	 * @throws Exception
 	 */
 	public function __construct(mysqli $connection, $conditions = null)
 	{
@@ -53,8 +55,10 @@ class MySQLDump
 
 	/**
 	 * Saves dump to the file.
-	 * @param  string filename
+	 * @param string $file
 	 * @return void
+	 *
+	 * @throws Exception
 	 */
 	public function save($file)
 	{
@@ -68,8 +72,10 @@ class MySQLDump
 
 	/**
 	 * Writes dump to logical file.
-	 * @param  resource
+	 * @param resource
 	 * @return void
+	 *
+	 * @throws Exception
 	 */
 	public function write($handle = NULL)
 	{
@@ -114,9 +120,12 @@ class MySQLDump
 
 	/**
 	 * Dumps table to logical file.
-	 * @param  resource
-	 * @param  string $conditions
+	 * @param resource $handle
+	 * @param string $table
+	 * @param string $conditions
 	 * @return void
+	 *
+	 * @throws Exception
 	 */
 	public function dumpTable($handle, $table, $conditions = '')
 	{
