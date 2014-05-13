@@ -30,7 +30,7 @@ class MySQLDump
 	/**
 	 * @var array
 	 */
-	private $_conditions = null;
+	private $_conditions = array();
 
 	/**
 	 * Connects to database.
@@ -42,7 +42,7 @@ class MySQLDump
 	public function __construct(mysqli $connection, $conditions = null)
 	{
 		$this->connection = $connection;
-		$this->_conditions = $conditions;
+		$this->_parseConditions($conditions);
 
 		if ($connection->connect_errno) {
 			throw new Exception($connection->connect_error);
@@ -106,10 +106,8 @@ class MySQLDump
 			. "SET FOREIGN_KEY_CHECKS=0;\n"
 		);
 
-		$commonConditions = $this->_conditions && is_string($this->_conditions);
-
 		foreach ($tables as $table) {
-			$this->dumpTable($handle, $table, $this->_conditions ? ($commonConditions ? $this->_conditions : (isset($this->_conditions[$table]) ? $this->_conditions[$table] : null)) : null);
+			$this->dumpTable($handle, $table, $this->_tableConditions($table));
 		}
 
 		fwrite($handle, "-- THE END\n");
@@ -219,4 +217,43 @@ class MySQLDump
 		return '`' . str_replace('`', '``', $s) . '`';
 	}
 
+	/**
+	 * Parses conditions array to $this::_conditions
+	 *
+	 * @param string|array $conditions
+	 */
+	private function _parseConditions($conditions)
+	{
+		if (!$conditions) return;
+
+		if (is_string($conditions)) {
+			$this->_conditions[''] = '(' . $conditions . ')';
+
+			return;
+		}
+
+		foreach($conditions as $conditionKey => $conditionSQL) {
+			$conditionSQL = '(' . $conditionSQL . ')';
+
+			if (is_int($conditionKey)) {
+				$this->_conditions[''] = $conditionSQL;
+			} else {
+				foreach (explode(',', $conditionKey) as $tableName) {
+					if (!isset($this->_conditions[$tableName])) $this->_conditions[$tableName] = $conditionSQL;
+					else $this->_conditions[$tableName] .= ' AND ' . $conditionSQL;
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * Returns table-specific SQL `WHERE` conditions
+	 * @param string $table Table name
+	 * @return string
+	 */
+	private function _tableConditions($table)
+	{
+		return (isset($this->_conditions[$table]) ? $this->_conditions[$table] : '') . (isset($this->_conditions['']) ? (isset($this->_conditions[$table]) ? ' AND ' : '') . $this->_conditions[''] : '');
+	}
 }
