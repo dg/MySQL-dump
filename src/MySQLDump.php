@@ -32,14 +32,14 @@ class MySQLDump
 	 * Connects to database.
 	 * @param  mysqli connection
 	 */
-	public function __construct(mysqli $connection)
+	public function __construct(mysqli $connection, $charset = 'utf8')
 	{
 		$this->connection = $connection;
 
 		if ($connection->connect_errno) {
 			throw new Exception($connection->connect_error);
 
-		} elseif (!$connection->set_charset('utf8')) { // was added in MySQL 5.0.7 and PHP 5.0.5, fixed in PHP 5.1.5)
+		} elseif (!$connection->set_charset($charset)) { // was added in MySQL 5.0.7 and PHP 5.0.5, fixed in PHP 5.1.5)
 			throw new Exception($connection->error);
 		}
 	}
