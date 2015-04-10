@@ -22,7 +22,7 @@ Then simply call `save()` or `write()`:
 
 	$dump->save('export.sql.gz');
 
-If you want to set a connection charset diffent from 'utf8', simply pass it as optional parameter:
+If you want to set a connection charset different from 'utf8', simply pass it as optional parameter:
 
 	$dump = new MySQLDump(new mysqli('localhost', 'root', 'password', 'database'), 'latin1');
 
