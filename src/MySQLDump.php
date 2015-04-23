@@ -142,7 +142,7 @@ class MySQLDump
 			while ($row = $res->fetch_assoc()) {
 				$col = $row['Field'];
 				$cols[] = $this->delimite($col);
-				$numeric[$col] = (bool) preg_match('#^[^(]*(BYTE|COUNTER|SERIAL|INT|LONG$|CURRENCY|REAL|MONEY|FLOAT|DOUBLE|DECIMAL|NUMERIC|NUMBER)#i', $row['Type']);
+				$numeric[$col] = (bool) preg_match('#^[^(]*(BYTE|COUNTER|SERIAL|INT|LONG$|CURRENCY|REAL|MONEY|FLOAT|DOUBLE|DECIMAL|NUMERIC|NUMBER)[^a-z]#i', $row['Type']);
 			}
 			$cols = '(' . implode(', ', $cols) . ')';
 			$res->close();
