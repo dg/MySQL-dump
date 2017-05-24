@@ -10,7 +10,7 @@
  */
 class MySQLImport
 {
-	/** @var callable */
+	/** @var callable  function (int $count, ?float $percent): void */
 	public $onProgress;
 
 	/** @var mysqli */
@@ -60,12 +60,15 @@ class MySQLImport
 			throw new Exception('Argument must be stream resource.');
 		}
 
+		$stat = fstat($handle);
+
 		$sql = '';
 		$delimiter = ';';
-		$count = 0;
+		$count = $size = 0;
 
 		while (!feof($handle)) {
 			$s = fgets($handle);
+			$size += strlen($s);
 			if (strtoupper(substr($s, 0, 10)) === 'DELIMITER ') {
 				$delimiter = trim(substr($s, 10));
 
@@ -77,7 +80,7 @@ class MySQLImport
 				$sql = '';
 				$count++;
 				if ($this->onProgress) {
-					call_user_func($this->onProgress, $count);
+					call_user_func($this->onProgress, $count, isset($stat['size']) ? $size * 100 / $stat['size'] : NULL);
 				}
 
 			} else {
@@ -89,6 +92,9 @@ class MySQLImport
 			$count++;
 			if (!$this->connection->query($sql)) {
 				throw new Exception($this->connection->error);
+			}
+			if ($this->onProgress) {
+				call_user_func($this->onProgress, $count, isset($stat['size']) ? 100 : NULL);
 			}
 		}
 
