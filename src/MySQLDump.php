@@ -6,7 +6,6 @@
  * @author     David Grudl (http://davidgrudl.com)
  * @copyright  Copyright (c) 2008 David Grudl
  * @license    New BSD License
- * @version    1.0
  */
 class MySQLDump
 {
@@ -20,9 +19,9 @@ class MySQLDump
 	const ALL = 15; // DROP | CREATE | DATA | TRIGGERS
 
 	/** @var array */
-	public $tables = array(
+	public $tables = [
 		'*' => self::ALL,
-	);
+	];
 
 	/** @var mysqli */
 	private $connection;
@@ -65,15 +64,15 @@ class MySQLDump
 	 * @param  resource
 	 * @return void
 	 */
-	public function write($handle = NULL)
+	public function write($handle = null)
 	{
-		if ($handle === NULL) {
+		if ($handle === null) {
 			$handle = fopen('php://output', 'wb');
 		} elseif (!is_resource($handle) || get_resource_type($handle) !== 'stream') {
 			throw new Exception('Argument must be stream resource.');
 		}
 
-		$tables = $views = array();
+		$tables = $views = [];
 
 		$res = $this->connection->query('SHOW FULL TABLES');
 		while ($row = $res->fetch_row()) {
@@ -90,10 +89,10 @@ class MySQLDump
 		$this->connection->query('LOCK TABLES `' . implode('` READ, `', $tables) . '` READ');
 
 		$db = $this->connection->query('SELECT DATABASE()')->fetch_row();
-		fwrite($handle, "-- Created at " . date('j.n.Y G:i') . " using David Grudl MySQL Dump Utility\n"
+		fwrite($handle, '-- Created at ' . date('j.n.Y G:i') . " using David Grudl MySQL Dump Utility\n"
 			. (isset($_SERVER['HTTP_HOST']) ? "-- Host: $_SERVER[HTTP_HOST]\n" : '')
-			. "-- MySQL Server: " . $this->connection->server_info . "\n"
-			. "-- Database: " . $db[0] . "\n"
+			. '-- MySQL Server: ' . $this->connection->server_info . "\n"
+			. '-- Database: ' . $db[0] . "\n"
 			. "\n"
 			. "SET NAMES utf8;\n"
 			. "SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';\n"
@@ -136,9 +135,9 @@ class MySQLDump
 		}
 
 		if (!$view && ($mode & self::DATA)) {
-			$numeric = array();
+			$numeric = [];
 			$res = $this->connection->query("SHOW COLUMNS FROM $delTable");
-			$cols = array();
+			$cols = [];
 			while ($row = $res->fetch_assoc()) {
 				$col = $row['Field'];
 				$cols[] = $this->delimite($col);
@@ -153,7 +152,7 @@ class MySQLDump
 			while ($row = $res->fetch_assoc()) {
 				$s = '(';
 				foreach ($row as $key => $value) {
-					if ($value === NULL) {
+					if ($value === null) {
 						$s .= "NULL,\t";
 					} elseif ($numeric[$key]) {
 						$s .= $value . ",\t";
@@ -206,5 +205,4 @@ class MySQLDump
 	{
 		return '`' . str_replace('`', '``', $s) . '`';
 	}
-
 }

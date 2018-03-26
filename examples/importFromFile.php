@@ -1,17 +1,17 @@
 <?php
 
 set_time_limit(0);
-ignore_user_abort(TRUE);
+ignore_user_abort(true);
 
 
 require __DIR__ . '/../src/MySQLImport.php';
 
-$time = -microtime(TRUE);
+$time = -microtime(true);
 
 $import = new MySQLImport(new mysqli('localhost', 'root', 'password', 'database'));
 
 $import->onProgress = function ($count, $percent) {
-	if ($percent !== NULL) {
+	if ($percent !== null) {
 		echo (int) $percent . " %\r";
 	} elseif ($count % 10 === 0) {
 		echo '.';
@@ -20,5 +20,5 @@ $import->onProgress = function ($count, $percent) {
 
 $import->load('dump.sql.gz');
 
-$time += microtime(TRUE);
+$time += microtime(true);
 echo "FINISHED (in $time s)";

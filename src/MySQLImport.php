@@ -6,7 +6,6 @@
  * @author     David Grudl (http://davidgrudl.com)
  * @copyright  Copyright (c) 2008 David Grudl
  * @license    New BSD License
- * @version    1.0
  */
 class MySQLImport
 {
@@ -80,7 +79,7 @@ class MySQLImport
 				$sql = '';
 				$count++;
 				if ($this->onProgress) {
-					call_user_func($this->onProgress, $count, isset($stat['size']) ? $size * 100 / $stat['size'] : NULL);
+					call_user_func($this->onProgress, $count, isset($stat['size']) ? $size * 100 / $stat['size'] : null);
 				}
 
 			} else {
@@ -94,11 +93,10 @@ class MySQLImport
 				throw new Exception($this->connection->error);
 			}
 			if ($this->onProgress) {
-				call_user_func($this->onProgress, $count, isset($stat['size']) ? 100 : NULL);
+				call_user_func($this->onProgress, $count, isset($stat['size']) ? 100 : null);
 			}
 		}
 
 		return $count;
 	}
-
 }
