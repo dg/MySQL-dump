@@ -36,7 +36,4 @@ $import = new MySQLImport($db);
 $import->load('dump.sql.gz');
 ```
 
------
-Project at GitHub: http://github.com/dg/MySQL-dump
-
-(c) David Grudl, 2008, 2013 (http://davidgrudl.com)
+If you like it, **[please make a donation now](https://nette.org/make-donation?to=mysql-dump)**. Thank you!
