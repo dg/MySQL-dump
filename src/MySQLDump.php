@@ -97,12 +97,15 @@ class MySQLDump
 			. "SET NAMES utf8;\n"
 			. "SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';\n"
 			. "SET FOREIGN_KEY_CHECKS=0;\n"
+			. "SET UNIQUE_CHECKS=0;\n"
+			. "SET AUTOCOMMIT=0;\n"
 		);
 
 		foreach ($tables as $table) {
 			$this->dumpTable($handle, $table);
 		}
 
+		fwrite($handle, "COMMIT;\n");
 		fwrite($handle, "-- THE END\n");
 
 		$this->connection->query('UNLOCK TABLES');
@@ -135,6 +138,7 @@ class MySQLDump
 		}
 
 		if (!$view && ($mode & self::DATA)) {
+			fwrite($handle, 'ALTER ' . ($view ? 'VIEW' : 'TABLE') . ' ' . $delTable . " DISABLE KEYS;\n\n");
 			$numeric = [];
 			$res = $this->connection->query("SHOW COLUMNS FROM $delTable");
 			$cols = [];
@@ -182,6 +186,7 @@ class MySQLDump
 			if ($size) {
 				fwrite($handle, ";\n");
 			}
+			fwrite($handle, 'ALTER ' . ($view ? 'VIEW' : 'TABLE') . ' ' . $delTable . " ENABLE KEYS;\n\n");
 			fwrite($handle, "\n");
 		}
 
