@@ -119,6 +119,11 @@ class MySQLDump
 	 */
 	public function dumpTable($handle, $table)
 	{
+		$mode = isset($this->tables[$table]) ? $this->tables[$table] : $this->tables['*'];
+		if ($mode === self::NONE) {
+			return;
+		}
+
 		$delTable = $this->delimite($table);
 		$res = $this->connection->query("SHOW CREATE TABLE $delTable");
 		$row = $res->fetch_assoc();
@@ -126,7 +131,6 @@ class MySQLDump
 
 		fwrite($handle, "-- --------------------------------------------------------\n\n");
 
-		$mode = isset($this->tables[$table]) ? $this->tables[$table] : $this->tables['*'];
 		$view = isset($row['Create View']);
 
 		if ($mode & self::DROP) {
