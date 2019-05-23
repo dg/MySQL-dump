@@ -165,21 +165,21 @@ class MySQLDump
 					}
 				}
 
-				if ($size == 0) {
-					$s = "INSERT INTO $delTable $cols VALUES\n$s";
-				} else {
-					$s = ",\n$s";
-				}
+//				if ($size == 0) {
+					$s = "INSERT INTO $delTable $cols VALUES $s";
+//				} else {
+//					$s = ",\n$s";
+//				}
 
 				$len = strlen($s) - 1;
 				$s[$len - 1] = ')';
-				fwrite($handle, $s, $len);
+				fwrite($handle, $s, $len . ";\n");
 
-				$size += $len;
-				if ($size > self::MAX_SQL_SIZE) {
-					fwrite($handle, ";\n");
-					$size = 0;
-				}
+//                $size += $len;
+//                if ($size > self::MAX_SQL_SIZE) {
+//                    fwrite($handle, ";\n");
+//                    $size = 0;
+//                }
 			}
 
 			$res->close();
