@@ -4,7 +4,7 @@ MySQL Dump Utility
 This is a backup utility used to dump a database for backup or transfer to another MySQL server.
 The dump typically contains SQL statements to create the table, populate it, or both.
 
-It requires PHP 5.6 or later.
+It requires PHP 5.6 (release 1.5) or PHP 7.1 or later.
 
 Usage
 -----
