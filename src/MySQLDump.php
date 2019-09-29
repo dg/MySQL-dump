@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * MySQL database dump.
  *
@@ -9,14 +11,14 @@
  */
 class MySQLDump
 {
-	const MAX_SQL_SIZE = 1e6;
+	public const NONE = 0;
+	public const DROP = 1;
+	public const CREATE = 2;
+	public const DATA = 4;
+	public const TRIGGERS = 8;
+	public const ALL = 15; // DROP | CREATE | DATA | TRIGGERS
 
-	const NONE = 0;
-	const DROP = 1;
-	const CREATE = 2;
-	const DATA = 4;
-	const TRIGGERS = 8;
-	const ALL = 15; // DROP | CREATE | DATA | TRIGGERS
+	private const MAX_SQL_SIZE = 1e6;
 
 	/** @var array */
 	public $tables = [
@@ -29,9 +31,8 @@ class MySQLDump
 
 	/**
 	 * Connects to database.
-	 * @param  mysqli connection
 	 */
-	public function __construct(mysqli $connection, $charset = 'utf8')
+	public function __construct(mysqli $connection, string $charset = 'utf8')
 	{
 		$this->connection = $connection;
 
@@ -46,10 +47,8 @@ class MySQLDump
 
 	/**
 	 * Saves dump to the file.
-	 * @param  string filename
-	 * @return void
 	 */
-	public function save($file)
+	public function save(string $file): void
 	{
 		$handle = strcasecmp(substr($file, -3), '.gz') ? fopen($file, 'wb') : gzopen($file, 'wb');
 		if (!$handle) {
@@ -62,9 +61,8 @@ class MySQLDump
 	/**
 	 * Writes dump to logical file.
 	 * @param  resource
-	 * @return void
 	 */
-	public function write($handle = null)
+	public function write($handle = null): void
 	{
 		if ($handle === null) {
 			$handle = fopen('php://output', 'wb');
@@ -115,9 +113,8 @@ class MySQLDump
 	/**
 	 * Dumps table to logical file.
 	 * @param  resource
-	 * @return void
 	 */
-	public function dumpTable($handle, $table)
+	public function dumpTable($handle, $table): void
 	{
 		$mode = isset($this->tables[$table]) ? $this->tables[$table] : $this->tables['*'];
 		if ($mode === self::NONE) {
@@ -210,7 +207,7 @@ class MySQLDump
 	}
 
 
-	private function delimite($s)
+	private function delimite(string $s): string
 	{
 		return '`' . str_replace('`', '``', $s) . '`';
 	}

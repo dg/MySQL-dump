@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * MySQL database dump loader.
  *
@@ -18,9 +20,8 @@ class MySQLImport
 
 	/**
 	 * Connects to database.
-	 * @param  mysqli connection
 	 */
-	public function __construct(mysqli $connection, $charset = 'utf8')
+	public function __construct(mysqli $connection, string $charset = 'utf8')
 	{
 		$this->connection = $connection;
 
@@ -35,10 +36,8 @@ class MySQLImport
 
 	/**
 	 * Loads dump from the file.
-	 * @param  string filename
-	 * @return int
 	 */
-	public function load($file)
+	public function load(string $file): int
 	{
 		$handle = strcasecmp(substr($file, -3), '.gz') ? fopen($file, 'rb') : gzopen($file, 'rb');
 		if (!$handle) {
@@ -51,9 +50,8 @@ class MySQLImport
 	/**
 	 * Reads dump from logical file.
 	 * @param  resource
-	 * @return int
 	 */
-	public function read($handle)
+	public function read($handle): int
 	{
 		if (!is_resource($handle) || get_resource_type($handle) !== 'stream') {
 			throw new Exception('Argument must be stream resource.');
