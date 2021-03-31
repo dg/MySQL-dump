@@ -16,7 +16,8 @@ class MySQLDump
 	public const CREATE = 2;
 	public const DATA = 4;
 	public const TRIGGERS = 8;
-	public const ALL = 15; // DROP | CREATE | DATA | TRIGGERS
+	public const FUNCTIONS = 16;
+	public const ALL = 31; // DROP | CREATE | DATA | TRIGGERS | FUNCTIONS
 
 	private const MAX_SQL_SIZE = 1e6;
 
@@ -201,6 +202,19 @@ class MySQLDump
 				fwrite($handle, "DELIMITER ;\n\n");
 			}
 			$res->close();
+		}
+		
+		//STILL TEST
+		if ($mode & self::FUNCTIONS) {
+		    $res = $this->connection->query("SHOW FUNCTION STATUS WHERE Security_type='DEFINER'");
+		    fwrite($handle, "DELIMITER ;;\n\n");
+		    while ($rows = $res->fetch_assoc()) {
+			$row = $this->connection->query("SHOW CREATE FUNCTION {$this->delimite($rows['Name'])}");
+			$func = $row->fetch_assoc();
+			fwrite($handle, $func['Create Function']. "$$;\n\n");
+		    }
+		    fwrite($handle, "DELIMITER ;\n\n");
+		    $res->close();
 		}
 
 		fwrite($handle, "\n");
