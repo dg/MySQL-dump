@@ -207,13 +207,14 @@ class MySQLDump
 		//STILL TEST
 		if ($mode & self::FUNCTIONS) {
 		    $res = $this->connection->query("SHOW FUNCTION STATUS WHERE Security_type='DEFINER'");
-		    fwrite($handle, "DELIMITER ;;\n\n");
 		    while ($rows = $res->fetch_assoc()) {
+			fwrite($handle, "DROP FUNCTION IF EXISTS {$this->delimite($rows['Name'])};\n");
+			fwrite($handle, "DELIMITER ;;\n");
 			$row = $this->connection->query("SHOW CREATE FUNCTION {$this->delimite($rows['Name'])}");
 			$func = $row->fetch_assoc();
-			fwrite($handle, $func['Create Function']. "$$;\n\n");
+			fwrite($handle, $func['Create Function']. "\n;;\n");
+			fwrite($handle, "DELIMITER ;\n\n");
 		    }
-		    fwrite($handle, "DELIMITER ;\n\n");
 		    $res->close();
 		}
 
