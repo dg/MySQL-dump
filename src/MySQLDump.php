@@ -131,6 +131,20 @@ class MySQLDump
 
 		$view = isset($row['Create View']);
 
+		if ($view && ($mode & self::FUNCTIONS)) {
+            	    $db = $this->connection->query('SELECT DATABASE()')->fetch_row();
+            	    $fres = $this->connection->query("SHOW FUNCTION STATUS WHERE Db='$db[0]'");
+		    while ($rows = $fres->fetch_assoc()) {
+			fwrite($handle, "DROP FUNCTION IF EXISTS {$this->delimite($rows['Name'])};\n");
+			fwrite($handle, "DELIMITER ;;\n\n");
+			$frow = $this->connection->query("SHOW CREATE FUNCTION {$this->delimite($rows['Name'])}");
+			$func = $frow->fetch_assoc();
+			fwrite($handle, $func['Create Function']. "\n;;\n\n");
+			fwrite($handle, "DELIMITER ;\n\n");
+		    }
+		    $fres->close();
+        	}
+		
 		if ($mode & self::DROP) {
 			fwrite($handle, 'DROP ' . ($view ? 'VIEW' : 'TABLE') . " IF EXISTS $delTable;\n\n");
 		}
@@ -202,19 +216,6 @@ class MySQLDump
 				fwrite($handle, "DELIMITER ;\n\n");
 			}
 			$res->close();
-		}
-		
-		//STILL TEST
-		if ($mode & self::FUNCTIONS) {
-		    $res = $this->connection->query("SHOW FUNCTION STATUS WHERE Security_type='DEFINER'");
-		    fwrite($handle, "DELIMITER ;;\n\n");
-		    while ($rows = $res->fetch_assoc()) {
-			$row = $this->connection->query("SHOW CREATE FUNCTION {$this->delimite($rows['Name'])}");
-			$func = $row->fetch_assoc();
-			fwrite($handle, $func['Create Function']. "$$;\n\n");
-		    }
-		    fwrite($handle, "DELIMITER ;\n\n");
-		    $res->close();
 		}
 
 		fwrite($handle, "\n");
