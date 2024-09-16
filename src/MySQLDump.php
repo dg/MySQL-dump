@@ -32,7 +32,7 @@ class MySQLDump
 	/**
 	 * Connects to database.
 	 */
-	public function __construct(mysqli $connection, string $charset = 'utf8')
+	public function __construct(mysqli $connection, string $charset = 'utf8mb4')
 	{
 		$this->connection = $connection;
 
@@ -92,7 +92,7 @@ class MySQLDump
 			. '-- MySQL Server: ' . $this->connection->server_info . "\n"
 			. '-- Database: ' . $db[0] . "\n"
 			. "\n"
-			. "SET NAMES utf8;\n"
+			. "SET NAMES utf8mb4;\n"
 			. "SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';\n"
 			. "SET FOREIGN_KEY_CHECKS=0;\n"
 			. "SET UNIQUE_CHECKS=0;\n"

@@ -21,7 +21,7 @@ class MySQLImport
 	/**
 	 * Connects to database.
 	 */
-	public function __construct(mysqli $connection, string $charset = 'utf8')
+	public function __construct(mysqli $connection, string $charset = 'utf8mb4')
 	{
 		$this->connection = $connection;
 
