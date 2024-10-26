@@ -16,7 +16,8 @@ class MySQLDump
 	public const CREATE = 2;
 	public const DATA = 4;
 	public const TRIGGERS = 8;
-	public const ALL = 15; // DROP | CREATE | DATA | TRIGGERS
+	public const FUNCTIONS = 16;
+	public const ALL = 31; // DROP | CREATE | DATA | TRIGGERS | FUNCTIONS
 
 	private const MAX_SQL_SIZE = 1e6;
 
@@ -130,6 +131,20 @@ class MySQLDump
 
 		$view = isset($row['Create View']);
 
+		if ($view && ($mode & self::FUNCTIONS)) {
+            	    $db = $this->connection->query('SELECT DATABASE()')->fetch_row();
+            	    $fres = $this->connection->query("SHOW FUNCTION STATUS WHERE Db='$db[0]'");
+		    while ($rows = $fres->fetch_assoc()) {
+			fwrite($handle, "DROP FUNCTION IF EXISTS {$this->delimite($rows['Name'])};\n");
+			fwrite($handle, "DELIMITER ;;\n\n");
+			$frow = $this->connection->query("SHOW CREATE FUNCTION {$this->delimite($rows['Name'])}");
+			$func = $frow->fetch_assoc();
+			fwrite($handle, $func['Create Function']. "\n;;\n\n");
+			fwrite($handle, "DELIMITER ;\n\n");
+		    }
+		    $fres->close();
+        	}
+		
 		if ($mode & self::DROP) {
 			fwrite($handle, 'DROP ' . ($view ? 'VIEW' : 'TABLE') . " IF EXISTS $delTable;\n\n");
 		}
