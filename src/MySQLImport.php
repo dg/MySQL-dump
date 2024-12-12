@@ -64,7 +64,7 @@ class MySQLImport
 		$count = $size = 0;
 
 		while (!feof($handle)) {
-			$s = fgets($handle);
+			$s = fgets($handle).'';
 			$size += strlen($s);
 			if (strtoupper(substr($s, 0, 10)) === 'DELIMITER ') {
 				$delimiter = trim(substr($s, 10));
