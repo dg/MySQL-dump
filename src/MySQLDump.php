@@ -16,7 +16,9 @@ class MySQLDump
 	public const CREATE = 2;
 	public const DATA = 4;
 	public const TRIGGERS = 8;
-	public const ALL = 15; // DROP | CREATE | DATA | TRIGGERS
+	public const TRUNCATE = 16; // use carefully table has to exists already
+	public const ALL = self::DROP | self::CREATE | self::DATA | self::TRIGGERS;
+	public const RESET = self::TRUNCATE | self::DATA;
 
 	private const MAX_SQL_SIZE = 1e6;
 
@@ -144,6 +146,8 @@ class MySQLDump
 
 		if ($mode & self::DROP) {
 			fwrite($handle, 'DROP ' . ($view ? 'VIEW' : 'TABLE') . " IF EXISTS $delTable;\n\n");
+		} elseif ($mode & self::TRUNCATE) {
+			fwrite($handle, 'TRUNCATE ' . ($view ? 'VIEW' : 'TABLE') . " $delTable;\n\n");
 		}
 
 		if ($mode & self::CREATE) {
