@@ -37,7 +37,7 @@ class MySQLImport
 	/**
 	 * Loads dump from the file.
 	 */
-	public function load(string $file): int
+	public function load(string $file) : int
 	{
 		$handle = strcasecmp(substr($file, -3), '.gz') ? fopen($file, 'rb') : gzopen($file, 'rb');
 		if (!$handle) {
@@ -51,7 +51,7 @@ class MySQLImport
 	 * Reads dump from logical file.
 	 * @param  resource
 	 */
-	public function read($handle): int
+	public function read($handle) : int
 	{
 		if (!is_resource($handle) || get_resource_type($handle) !== 'stream') {
 			throw new Exception('Argument must be stream resource.');
@@ -65,23 +65,25 @@ class MySQLImport
 
 		while (!feof($handle)) {
 			$s = fgets($handle);
-			$size += strlen($s);
-			if (strtoupper(substr($s, 0, 10)) === 'DELIMITER ') {
-				$delimiter = trim(substr($s, 10));
+			if ($s) {
+				$size += strlen($s);
+				if (strtoupper(substr($s, 0, 10)) === 'DELIMITER ') {
+					$delimiter = trim(substr($s, 10));
 
-			} elseif (substr($ts = rtrim($s), -strlen($delimiter)) === $delimiter) {
-				$sql .= substr($ts, 0, -strlen($delimiter));
-				if (!$this->connection->query($sql)) {
-					throw new Exception($this->connection->error . ': ' . $sql);
-				}
-				$sql = '';
-				$count++;
-				if ($this->onProgress) {
-					call_user_func($this->onProgress, $count, isset($stat['size']) ? $size * 100 / $stat['size'] : null);
-				}
+				} elseif (substr($ts = rtrim($s), -strlen($delimiter)) === $delimiter) {
+					$sql .= substr($ts, 0, -strlen($delimiter));
+					if (!$this->connection->query($sql)) {
+						throw new Exception($this->connection->error . ': ' . $sql);
+					}
+					$sql = '';
+					$count++;
+					if ($this->onProgress) {
+						call_user_func($this->onProgress, $count, isset($stat['size']) ? $size * 100 / $stat['size'] : null);
+					}
 
-			} else {
-				$sql .= $s;
+				} else {
+					$sql .= $s;
+				}
 			}
 		}
 
