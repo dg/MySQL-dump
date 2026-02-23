@@ -1,6 +1,5 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
 set_time_limit(0);
 ignore_user_abort(true);
 
