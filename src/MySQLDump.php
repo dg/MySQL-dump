@@ -14,7 +14,8 @@ class MySQLDump
 	public const CREATE = 2;
 	public const DATA = 4;
 	public const TRIGGERS = 8;
-	public const ALL = 15; // DROP | CREATE | DATA | TRIGGERS
+	public const ROUTINES = 16;
+	public const ALL = 31; // DROP | CREATE | DATA | TRIGGERS | ROUTINES
 
 	private const MAX_SQL_SIZE = 1e6;
 
@@ -101,6 +102,32 @@ class MySQLDump
 
 		foreach ($tables as $table) {
 			$this->dumpTable($handle, $table);
+		}
+
+		if (($this->tables['*'] ?? 0) & self::ROUTINES) {
+			$routines = [];
+			foreach (['FUNCTION', 'PROCEDURE'] as $type) {
+				$res = $this->connection->query("SHOW $type STATUS WHERE Db = DATABASE()");
+				while ($row = $res->fetch_assoc()) {
+					$routines[] = [$type, $row['Name']];
+				}
+				$res->close();
+			}
+
+			$res = $this->connection->query('SHOW EVENTS WHERE Db = DATABASE()');
+			while ($row = $res->fetch_assoc()) {
+				$routines[] = ['EVENT', $row['Name']];
+			}
+			$res->close();
+
+			if ($routines) {
+				fwrite($handle, "-- --------------------------------------------------------\n\n");
+				fwrite($handle, "DELIMITER ;;\n\n");
+				foreach ($routines as [$type, $name]) {
+					$this->writeRoutine($handle, $type, $name);
+				}
+				fwrite($handle, "DELIMITER ;\n\n");
+			}
 		}
 
 		fwrite($handle, "COMMIT;\n");
@@ -208,6 +235,61 @@ class MySQLDump
 		}
 
 		fwrite($handle, "\n");
+	}
+
+
+	/**
+	 * Dumps stored function to logical file.
+	 * @param  resource
+	 */
+	public function dumpFunction($handle, string $name): void
+	{
+		fwrite($handle, "DELIMITER ;;\n\n");
+		$this->writeRoutine($handle, 'FUNCTION', $name);
+		fwrite($handle, "DELIMITER ;\n\n");
+	}
+
+
+	/**
+	 * Dumps stored procedure to logical file.
+	 * @param  resource
+	 */
+	public function dumpProcedure($handle, string $name): void
+	{
+		fwrite($handle, "DELIMITER ;;\n\n");
+		$this->writeRoutine($handle, 'PROCEDURE', $name);
+		fwrite($handle, "DELIMITER ;\n\n");
+	}
+
+
+	/**
+	 * Dumps scheduled event to logical file.
+	 * @param  resource
+	 */
+	public function dumpEvent($handle, string $name): void
+	{
+		fwrite($handle, "DELIMITER ;;\n\n");
+		$this->writeRoutine($handle, 'EVENT', $name);
+		fwrite($handle, "DELIMITER ;\n\n");
+	}
+
+
+	private function writeRoutine($handle, string $type, string $name): void
+	{
+		$mode = $this->tables['*'] ?? 0;
+		$delName = $this->delimite($name);
+
+		if ($mode & self::DROP) {
+			fwrite($handle, "DROP $type IF EXISTS $delName;;\n\n");
+		}
+
+		if ($mode & self::CREATE) {
+			$res = $this->connection->query("SHOW CREATE $type $delName");
+			$row = $res->fetch_assoc();
+			$res->close();
+			$create = preg_replace('/^CREATE\s+DEFINER\s*=\s*\S+\s+/', 'CREATE ', $row['Create ' . ucfirst(strtolower($type))], 1);
+			fwrite($handle, $create . ";;\n\n");
+		}
 	}
 
 
