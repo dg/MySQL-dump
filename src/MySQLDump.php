@@ -196,7 +196,11 @@ class MySQLDump
 			if ($res->num_rows) {
 				fwrite($handle, "DELIMITER ;;\n\n");
 				while ($row = $res->fetch_assoc()) {
-					fwrite($handle, "CREATE TRIGGER {$this->delimite($row['Trigger'])} $row[Timing] $row[Event] ON $delTable FOR EACH ROW\n$row[Statement];;\n\n");
+					$delTrigger = $this->delimite($row['Trigger']);
+					if ($mode & self::DROP) {
+						fwrite($handle, "DROP TRIGGER IF EXISTS $delTrigger;;\n\n");
+					}
+					fwrite($handle, "CREATE TRIGGER $delTrigger $row[Timing] $row[Event] ON $delTable FOR EACH ROW\n$row[Statement];;\n\n");
 				}
 				fwrite($handle, "DELIMITER ;\n\n");
 			}
