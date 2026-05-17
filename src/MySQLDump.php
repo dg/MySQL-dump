@@ -85,7 +85,9 @@ class MySQLDump
 		$this->connection->query('LOCK TABLES `' . implode('` READ, `', $tables) . '` READ');
 
 		$db = $this->connection->query('SELECT DATABASE()')->fetch_row();
-		fwrite($handle, '-- Created at ' . date('j.n.Y G:i') . " using David Grudl MySQL Dump Utility\n"
+		fwrite(
+			$handle,
+			'-- Created at ' . date('j.n.Y G:i') . " using David Grudl MySQL Dump Utility\n"
 			. (isset($_SERVER['HTTP_HOST']) ? "-- Host: $_SERVER[HTTP_HOST]\n" : '')
 			. '-- MySQL Server: ' . $this->connection->server_info . "\n"
 			. '-- Database: ' . $db[0] . "\n"
@@ -94,7 +96,7 @@ class MySQLDump
 			. "SET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';\n"
 			. "SET FOREIGN_KEY_CHECKS=0;\n"
 			. "SET UNIQUE_CHECKS=0;\n"
-			. "SET AUTOCOMMIT=0;\n"
+			. "SET AUTOCOMMIT=0;\n",
 		);
 
 		foreach ($tables as $table) {
@@ -114,7 +116,7 @@ class MySQLDump
 	 */
 	public function dumpTable($handle, $table): void
 	{
-		$mode = isset($this->tables[$table]) ? $this->tables[$table] : $this->tables['*'];
+		$mode = $this->tables[$table] ?? $this->tables['*'];
 		if ($mode === self::NONE) {
 			return;
 		}
