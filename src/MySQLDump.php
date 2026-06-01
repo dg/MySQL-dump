@@ -19,26 +19,22 @@ class MySQLDump
 
 	private const MAX_SQL_SIZE = 1e6;
 
-	/** @var array */
-	public $tables = [
+	public array $tables = [
 		'*' => self::ALL,
 	];
-
-	/** @var mysqli */
-	private $connection;
 
 
 	/**
 	 * Connects to database.
 	 */
-	public function __construct(mysqli $connection, string $charset = 'utf8mb4')
-	{
-		$this->connection = $connection;
-
+	public function __construct(
+		private readonly mysqli $connection,
+		string $charset = 'utf8mb4',
+	) {
 		if ($connection->connect_errno) {
 			throw new Exception($connection->connect_error);
 
-		} elseif (!$connection->set_charset($charset)) { // was added in MySQL 5.0.7 and PHP 5.0.5, fixed in PHP 5.1.5)
+		} elseif (!$connection->set_charset($charset)) {
 			throw new Exception($connection->error);
 		}
 	}
@@ -49,7 +45,7 @@ class MySQLDump
 	 */
 	public function save(string $file): void
 	{
-		$handle = strcasecmp(substr($file, -3), '.gz') ? fopen($file, 'wb') : gzopen($file, 'wb');
+		$handle = str_ends_with(strtolower($file), '.gz') ? gzopen($file, 'wb') : fopen($file, 'wb');
 		if (!$handle) {
 			throw new Exception("ERROR: Cannot write file '$file'.");
 		}
@@ -141,7 +137,7 @@ class MySQLDump
 	 * Dumps table to logical file.
 	 * @param  resource
 	 */
-	public function dumpTable($handle, $table): void
+	public function dumpTable($handle, string $table): void
 	{
 		$mode = $this->tables[$table] ?? $this->tables['*'];
 		if ($mode === self::NONE) {
