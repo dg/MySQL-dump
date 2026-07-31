@@ -215,19 +215,29 @@ class MySQLDump
 		}
 
 		if ($mode & self::TRIGGERS) {
-			$res = $this->connection->query("SHOW TRIGGERS LIKE '" . $this->connection->real_escape_string($table) . "'");
-			if ($res->num_rows) {
+			$res = $this->connection->query("SHOW TRIGGERS WHERE `Table` = '" . $this->connection->real_escape_string($table) . "'");
+			$triggers = [];
+			while ($row = $res->fetch_assoc()) {
+				$triggers[] = $row['Trigger'];
+			}
+			$res->close();
+
+			if ($triggers) {
 				fwrite($handle, "DELIMITER ;;\n\n");
-				while ($row = $res->fetch_assoc()) {
-					$delTrigger = $this->delimite($row['Trigger']);
+				foreach ($triggers as $trigger) {
+					$delTrigger = $this->delimite($trigger);
 					if ($mode & self::DROP) {
 						fwrite($handle, "DROP TRIGGER IF EXISTS $delTrigger;;\n\n");
 					}
-					fwrite($handle, "CREATE TRIGGER $delTrigger $row[Timing] $row[Event] ON $delTable FOR EACH ROW\n$row[Statement];;\n\n");
+
+					// SHOW TRIGGERS returns a normalized body with broken escaping, only SHOW CREATE gives the original
+					$res = $this->connection->query("SHOW CREATE TRIGGER $delTrigger");
+					$row = $res->fetch_assoc();
+					$res->close();
+					fwrite($handle, $this->stripDefiner($row['SQL Original Statement']) . ";;\n\n");
 				}
 				fwrite($handle, "DELIMITER ;\n\n");
 			}
-			$res->close();
 		}
 
 		fwrite($handle, "\n");
@@ -283,9 +293,18 @@ class MySQLDump
 			$res = $this->connection->query("SHOW CREATE $type $delName");
 			$row = $res->fetch_assoc();
 			$res->close();
-			$create = preg_replace('/^CREATE\s+DEFINER\s*=\s*\S+\s+/', 'CREATE ', $row['Create ' . ucfirst(strtolower($type))], 1);
-			fwrite($handle, $create . ";;\n\n");
+			fwrite($handle, $this->stripDefiner($row['Create ' . ucfirst(strtolower($type))]) . ";;\n\n");
 		}
+	}
+
+
+	/**
+	 * Removes the DEFINER clause so the dump imports under any user.
+	 */
+	private function stripDefiner(string $sql): string
+	{
+		$identifier = '(?:`(?:[^`]|``)*`|\S+?)';
+		return preg_replace('/^CREATE\s+DEFINER\s*=\s*' . $identifier . '@' . $identifier . '\s+/', 'CREATE ', $sql, 1);
 	}
 
 

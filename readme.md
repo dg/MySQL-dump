@@ -25,7 +25,7 @@ $dump->tables['log'] = MySQLDump::NONE;
 
 Available flags: `NONE`, `DROP`, `CREATE`, `DATA`, `TRIGGERS`, `ROUTINES`, and `ALL` (all of the above).
 `ROUTINES` is read from `$dump->tables['*']` and controls export of stored functions, stored procedures, and scheduled events at the database level.
-The `DEFINER=` clause is stripped from exported routines so the dump imports cleanly under any user.
+The `DEFINER=` clause is stripped from exported routines and triggers so the dump imports cleanly under any user.
 
 Then simply call `save()` or `write()`:
 
