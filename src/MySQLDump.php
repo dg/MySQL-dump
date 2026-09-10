@@ -2,10 +2,6 @@
 
 /**
  * MySQL database dump.
- *
- * @author     David Grudl (http://davidgrudl.com)
- * @copyright  Copyright (c) 2008 David Grudl
- * @license    New BSD License
  */
 class MySQLDump
 {
@@ -77,7 +73,7 @@ class MySQLDump
 		}
 		$res->close();
 
-		$tables = array_merge($tables, $views); // views must be last
+		$tables = [...$tables, ...$views]; // views must be last
 
 		$this->connection->query('LOCK TABLES `' . implode('` READ, `', $tables) . '` READ');
 
@@ -169,7 +165,10 @@ class MySQLDump
 			while ($row = $res->fetch_assoc()) {
 				$col = $row['Field'];
 				$cols[] = $this->delimite($col);
-				$numeric[$col] = (bool) preg_match('#^[^(]*(BYTE|COUNTER|SERIAL|INT|LONG$|CURRENCY|REAL|MONEY|FLOAT|DOUBLE|DECIMAL|NUMERIC|NUMBER)#i', $row['Type']);
+				$numeric[$col] = (bool) preg_match(
+					'#^[^(]*(BYTE|COUNTER|SERIAL|INT|LONG$|CURRENCY|REAL|MONEY|FLOAT|DOUBLE|DECIMAL|NUMERIC|NUMBER)#i',
+					$row['Type'],
+				);
 			}
 			$cols = '(' . implode(', ', $cols) . ')';
 			$res->close();
@@ -189,11 +188,7 @@ class MySQLDump
 					}
 				}
 
-				if ($size == 0) {
-					$s = "INSERT INTO $delTable $cols VALUES\n$s";
-				} else {
-					$s = ",\n$s";
-				}
+				$s = $size === 0 ? "INSERT INTO $delTable $cols VALUES\n$s" : ",\n$s";
 
 				$len = strlen($s) - 1;
 				$s[$len - 1] = ')';
