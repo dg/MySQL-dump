@@ -5,7 +5,7 @@
  */
 class MySQLImport
 {
-	/** @var (\Closure(int $count, ?float $percent): void)|null */
+	/** @var (Closure(int $count, ?float $percent): void)|null */
 	public ?Closure $onProgress = null;
 
 
