@@ -1,0 +1,17 @@
+name: Coding Style
+
+on: [push, pull_request]
+
+jobs:
+    dresscode:
+        name: DressCode
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.4
+                  coverage: none
+
+            - run: composer create-project dresscode/dresscode temp/dresscode dev-master --no-progress
+            - run: php temp/dresscode/bin/dresscode check
