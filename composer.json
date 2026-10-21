@@ -1,7 +1,7 @@
 {
 	"name": "dg/mysql-dump",
-	"description": "MySQL database dump.",
-	"keywords": ["mysql"],
+	"description": "🐬 MySQL Dump: backs up a MySQL database to an SQL file, views, triggers and routines included, and imports it back, using just mysqli.",
+	"keywords": ["mysql", "mysqldump", "backup", "export", "import", "mariadb"],
 	"homepage": "https://github.com/dg/MySQL-dump",
 	"license": ["BSD-3-Clause"],
 	"authors": [
